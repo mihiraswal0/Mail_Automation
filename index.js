@@ -17,6 +17,7 @@ app.use('/api/mailReply',mailReply);
 
 
 app.use('/',(req,res)=>{
+    console.log(req.session.tokens);
     res.render("pages/index");
 })
 
