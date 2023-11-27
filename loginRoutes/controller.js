@@ -5,7 +5,7 @@ const oAuth2Client = new OAuth2Client(process.env.CLIENT_ID, process.env.CLIENT_
 const googleLogin=(req,res)=>{
     const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
-        scope: ['https://www.googleapis.com/auth/gmail.compose'],
+        scope: ['https://www.googleapis.com/auth/gmail.compose','https://www.googleapis.com/auth/gmail.readonly']
       });
       res.redirect(authUrl);
 }
@@ -16,7 +16,6 @@ const googleCallback=async(req,res)=>{
       const { tokens } = await oAuth2Client.getToken(code);  
     //   console.log(tokens);
       req.session.tokens=tokens;
-      console.log(req.session.tokens);
       res.send('Login successful! .');
     } catch (error) {
       console.error(error);

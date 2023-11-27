@@ -12,12 +12,18 @@ app.use(session({
     saveUninitialized:true
 }));
 
+const isLogin=(req,res,next)=>{
+    if(req.session.tokens)
+    next();
+else
+res.redirect("/");
+}
+
 app.use('/api/google',loginRoutes);
-app.use('/api/mailReply',mailReply);
+app.use('/api/mailReply',isLogin,mailReply);
 
 
 app.use('/',(req,res)=>{
-    console.log(req.session.tokens);
     res.render("pages/index");
 })
 
