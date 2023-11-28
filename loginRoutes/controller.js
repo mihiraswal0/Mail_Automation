@@ -6,7 +6,10 @@ const oAuth2Client = new OAuth2Client(process.env.CLIENT_ID, process.env.CLIENT_
 const googleLogin=(req,res)=>{
     const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
-        scope: ['https://www.googleapis.com/auth/gmail.readonly','https://www.googleapis.com/auth/userinfo.profile']
+        scope: ["https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/gmail.labels",
+        "https://mail.google.com/"]
       });
       res.redirect(authUrl);
 }
