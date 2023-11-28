@@ -1,229 +1,66 @@
 const axios = require("axios");
 const { OAuth2Client } = require("google-auth-library");
-const { oauth2 } = require("googleapis/build/src/apis/oauth2");
-const { google } = require("googleapis");
 require("dotenv").config();
 
+const {
+  getUnreadMail,
+  getMailDetails,
+  getMessageHeader,
+  replyToMessage,
+  changeLabel,
+  createLabel,
+  getLabels,
+  labelCreation,
+  checkReplied,
+} = require("./detailsRoutes/controller.js");
+
+//oauth object
 const oAuth2Client = new OAuth2Client(
   process.env.CLIENT_ID,
   process.env.CLIENT_SECRET,
   process.env.REDIRECT_URL
 );
-const labelCreation = async (req, res, next) => {
-  oAuth2Client.setCredentials({
-    refresh_token: req.session.tokens.refresh_token,
-  });
-  const { token } = await oAuth2Client.getAccessToken();
-  try {
-    const getAllLabels = await getLabels(token);
-    let existLabel = getAllLabels.find((label) => label.name === "AUTOREPLY");
-    let labelId;
-    if (!existLabel) {
-      const createnewLabel = await createLabel(token);
-      console.log(createnewLabel);
-      labelId = createnewLabel.id;
-    } else labelId = existLabel.id;
-    req.session.label = labelId;
 
-    // res.send("stop")
-    next();
-  } catch (err) {
-    console.log(err);
-    res.send(err.message);
-  }
-};
 const mailReply = async (req, res) => {
-  setInterval(async () => {
+  // setInterval(async () => {
+    console.log("Checking for mails");
     oAuth2Client.setCredentials({
-      refresh_token: req.session.tokens.refresh_token,
+      refresh_token: req.session.tokens.refresh_token, //setting oauth credentials
     });
-    const { token } = await oAuth2Client.getAccessToken();
+    const { token } = await oAuth2Client.getAccessToken(); //reciving access token
     // res.send("mail");
+    console.log("Token Received:" + token);
     try {
-      const unReadMails = await getUnreadMail(token);
+      req.session.label = await labelCreation(token); //creation of AUTOREPLY label
+      const unReadMails = await getUnreadMail(token); //recieve unread mail thread
       unReadMails.threads.map(async (mail) => {
-        const messagesInThread = await getMailDetails(mail.id, token);
-        let isReplied = false;
-        console.log(messagesInThread);
-        for (i in messagesInThread) {
-          const messageHeader = await getMessageHeader(
-            messagesInThread[i].id,
-            token,
-            "From"
-          );
-          if (
-            messageHeader.length &&
-            messageHeader[0].value.includes(req.session.user)
-          ) {
-            isReplied = true;
-            break;
-          }
-        }
+        const messagesInThread = await getMailDetails(mail.id, token); //decoding each message in thread
+        let isReplied = await checkReplied(messagesInThread,token,req.session.user); //to check whether we have replied in the given thread or not
 
+        //to send mail to unread mails threads
         if (!isReplied) {
-          const reciever = await getMessageHeader(mail.id, token, "From");
-          const subject = await getMessageHeader(mail.id, token, "Subject");
+          const reciever = await getMessageHeader(mail.id, token, "From"); //to get reciever of the thread
+          const subject = await getMessageHeader(mail.id, token, "Subject"); //to get subject of the thread
+          console.log("Received a mail from:" + reciever[0].value);
           const sendReply = await replyToMessage(
+            //to send reply
             mail.id,
-            "On holdidays",
+            "I am on vacation will get back to you. Thanks",
             req.session.user,
             reciever[0].value,
             subject[0].value,
             token
           );
-          const label = await changeLabel(mail.id, token, req.session.label);
+          console.log("Reply Send:" + reciever[0].value);
+          const label = await changeLabel(mail.id, token, req.session.label); //modify the label of current thread
         }
       });
-      res.send("done");
+
+      res.end("Replied to all the unread messages... We will again reply for any unread messages after 45 to 120 seconds");
     } catch (err) {
-      res.send(err.message);
+      res.end(err.message); //to catch any error
     }
-  }, Math.round(Math.random() * (120 - 45 + 1) + 45) * 1000);
+  // }, Math.round(Math.random() * (120 - 45 + 1) + 45) * 1000);
 };
-const getUnreadMail = async (token) => {
-  try {
-    const response = await axios.get(
-      "https://www.googleapis.com/gmail/v1/users/me/threads?q=is:unread is:inbox category:primary &maxResults=1",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
 
-    return response.data;
-  } catch (err) {
-    throw err;
-  }
-};
-const getMailDetails = async (id, token) => {
-  try {
-    const response = await axios.get(
-      ` https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          format: "minimal",
-        },
-      }
-    );
-    return response.data.messages;
-  } catch (err) {
-    throw err;
-  }
-};
-const getMessageHeader = async (id, token, metadata) => {
-  try {
-    const response = await axios.get(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          format: "metadata",
-          metadataHeaders: metadata,
-        },
-      }
-    );
-    return response.data.payload.headers;
-  } catch (err) {
-    throw err;
-  }
-};
-const replyToMessage = async (
-  messageId,
-  replyMessage,
-  sender,
-  reciever,
-  subject,
-  token
-) => {
-  try {
-    const sendResponse = await axios.post(
-      "https://www.googleapis.com/gmail/v1/users/me/messages/send",
-      {
-        threadId: messageId,
-        raw: Buffer.from(
-          `From: ${sender}\r\n` +
-            `To: ${reciever}\r\n` +
-            `Subject: Re: ${subject}\r\n` +
-            `Content-Type: text/plain; charset="UTF-8"\r\n` +
-            `Content-Transfer-Encoding: 7bit\r\n\r\n` +
-            `${replyMessage}\r\n`
-        ).toString("base64"),
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    return sendResponse.data;
-  } catch (err) {
-    throw err;
-  }
-};
-const changeLabel = async (id, token, label) => {
-  try {
-    const response = await axios.post(
-      `https://www.googleapis.com/gmail/v1/users/me/messages/${id}/modify`,
-      {
-        addLabelIds: [`${label}`],
-        removeLabelIds: ["UNREAD"],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    console.log(response.data);
-    return response.data;
-  } catch (err) {
-    throw err;
-  }
-};
-const createLabel = async (token) => {
-  try {
-    const response = await axios.post(
-      "https://www.googleapis.com/gmail/v1/users/me/labels",
-      {
-        name: "AUTOREPLY",
-        labelListVisibility: "labelShow",
-        messageListVisibility: "show",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    return response.data;
-  } catch (err) {
-    console.log(err.message);
-    throw err;
-  }
-};
-const getLabels = async (token) => {
-  try {
-    const response = await axios.get(
-      "https://www.googleapis.com/gmail/v1/users/me/labels",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return response.data.labels;
-  } catch (err) {
-    throw err;
-  }
-};
-module.exports = { mailReply, labelCreation };
+module.exports = { mailReply };
