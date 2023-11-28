@@ -21,6 +21,7 @@ const googleCallback=async(req,res)=>{
     //   console.log(tokens);
       req.session.tokens=tokens;
       req.session.user=await getUserDetails(tokens.access_token);
+      
       res.send('Login successful! .');
     } catch (error) {
       res.status(500).send('Login failed. Please try again.');

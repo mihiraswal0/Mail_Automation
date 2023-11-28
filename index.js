@@ -2,7 +2,7 @@ const express=require('express');
 const app=express();
 const session=require('express-session');
 const loginRoutes=require('./loginRoutes/routes.js');
-const {mailReply}=require('./controller.js');
+const {mailReply,labelCreation}=require('./controller.js');
 require('dotenv').config();
 const port=8000
 app.set("view engine","ejs");
@@ -20,7 +20,7 @@ res.redirect("/");
 }
 
 app.use('/api/google',loginRoutes);
-app.use('/api/mailReply',isLogin,mailReply);
+app.use('/api/mailReply',isLogin,labelCreation,mailReply);
 
 
 app.use('/',(req,res)=>{
