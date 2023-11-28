@@ -1,11 +1,12 @@
 # Mail_Automation
-This project was a part of an assessment for Backend Internship by listed. In this project I devloped a Node.js based app that is able to respond to emails sent to your Gmail mailbox while you’re out on a vacation. 
+This project was a part of an assessment for Backend Internship by listed. In this project I devloped a Node.js based app that is able to respond to emails sent to our Gmail mailbox while we’re out on a vacation. 
 
 ## Features
 1. Login using Google [http://localhost:8000/api/google/login](http://localhost:8000/api/google/login)
 2. Automatic replies to all the unread messages receiving for the first time. [http://localhost:8000/api/mailReply](http://localhost:8000/api/mailReply)
 3. Automatically add labels to the replied messages .
-4. Logout using Google [http://localhost:8000/api/google/logout](http://localhost:8000/api/google/logout)
+4. Repeatdly check for unread messages after a certain period of time.
+5. Logout using Google [http://localhost:8000/api/google/logout](http://localhost:8000/api/google/logout)
 
 ### Technologies
 
@@ -49,8 +50,7 @@ http://localhost:8000/api/mailReply
 http://localhost:8000/api/google/logout
 ```
 
-
-
-
-
-   
+### Area of improvement:
+1. Optimising and minimising api calls to avoid reterival of same data and improving the performance.
+2. Introducing  a way to filter the messaeges and to reply them with a particular messages
+3. To determine messages that has to be ignored
