@@ -21,7 +21,7 @@ const labelCreation = async (token) => {
 const getUnreadMail = async (token) => {
   try {
     const response = await axios.get(
-      "https://www.googleapis.com/gmail/v1/users/me/threads?q=is:unread is:inbox category:primary &maxResults=1",
+      "https://www.googleapis.com/gmail/v1/users/me/threads?q=is:unread is:inbox category:primary &maxResults=3",
       {
         headers: {
           Authorization: `Bearer ${token}`,
