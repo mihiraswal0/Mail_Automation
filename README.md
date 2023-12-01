@@ -51,6 +51,7 @@ http://localhost:8000/api/google/logout
 ```
 
 ### Area of improvement:
+1. Improving more secured way to store access and refresh token.
 1. Optimising and minimising api calls to avoid reterival of same data and improving the performance.
-2. Introducing  a way to filter the messaeges and to reply them with a particular messages
-3. To determine messages that has to be ignored
+2. Introducing  a way to filter the messaeges and to reply them with a particular messages.
+3. To determine messages that has to be ignored while replying to them.
